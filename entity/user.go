@@ -3,11 +3,11 @@ package entity
 import "time"
 
 type User struct {
-	ID             int16     `json:"id" sql:"id"`
-	Email          string    `json:"email" validate:"required" sql:"email"`
-	HashedPassword string    `json:"password" validate:"required" sql:"password"`
-	Username       string    `json:"username" sql:"username"`
-	TokenHash      string    `json:"tokenhash" sql:"tokenhash"`
-	CreatedAt      time.Time `json:"createdat" sql:"createdat"`
-	UpdatedAt      time.Time `json:"updatedat" sql:"updatedat"`
+	ID             int16     `json:"id"`
+	Email          string    `json:"email"`
+	HashedPassword string    `json:"password"`
+	Username       string    `json:"username"`
+	TokenHash      string    `json:"tokenhash"`
+	CreatedAt      time.Time `json:"-"`
+	UpdatedAt      time.Time `json:"-"`
 }
