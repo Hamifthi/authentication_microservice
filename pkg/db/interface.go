@@ -1,4 +1,4 @@
-package databaseService
+package db
 
 import "github.com/Hamifthi/authentication_microservice/entity"
 

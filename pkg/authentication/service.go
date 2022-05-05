@@ -1,10 +1,10 @@
-package authenticationService
+package authentication
 
 import (
 	"fmt"
 	"github.com/Hamifthi/authentication_microservice/entity"
 	"github.com/Hamifthi/authentication_microservice/internal"
-	"github.com/Hamifthi/authentication_microservice/pkg/databaseService"
+	"github.com/Hamifthi/authentication_microservice/pkg/db"
 	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	passwordValidator "github.com/wagslane/go-password-validator"
@@ -16,11 +16,11 @@ import (
 )
 
 type authenticationService struct {
-	dbService databaseService.DatabaseInterface
+	dbService db.DatabaseInterface
 	logger    *log.Logger
 }
 
-func New(dbService *databaseService.DatabaseInterface, logger *log.Logger) *authenticationService {
+func New(dbService *db.DatabaseInterface, logger *log.Logger) *authenticationService {
 	return &authenticationService{
 		dbService: *dbService,
 		logger:    logger,
@@ -112,7 +112,7 @@ func (a *authenticationService) SignUp(email, password string) error {
 	tokenHash := internal.RandString(15)
 	err = a.dbService.CreateUser(email, string(hashedPass), tokenHash)
 	if err != nil {
-		return errors.Wrap(err, "The user can't be inserted to the database")
+		return errors.Wrap(err, "The user can't be inserted to the db")
 	}
 	return nil
 }

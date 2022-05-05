@@ -1,4 +1,4 @@
-package authenticationService
+package authentication
 
 import "github.com/Hamifthi/authentication_microservice/entity"
 
