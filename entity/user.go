@@ -8,13 +8,13 @@ import (
 )
 
 type User struct {
-	ID             int16     `json:"id"`
-	Email          string    `json:"email" validate:"required"`
-	Password       string    `json:"-" validate:"required"`
-	HashedPassword string    `json:"password"`
-	TokenHash      string    `json:"tokenhash"`
-	CreatedAt      time.Time `json:"-"`
-	UpdatedAt      time.Time `json:"-"`
+	ID             int16     `gorm:"primaryKey;autoIncrement" json:"id"`
+	Email          string    `gorm:"not null" json:"email" validate:"required"`
+	Password       string    `sql:"-" json:"password" validate:"required"`
+	HashedPassword string    `json:"-"`
+	TokenHash      string    `json:"-"`
+	CreatedAt      time.Time `gorm:"autoCreateTime:milli" json:"-"`
+	UpdatedAt      time.Time `gorm:"autoCreateTime:milli" json:"-"`
 }
 
 func (u *User) Validate() error {

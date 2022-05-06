@@ -8,12 +8,16 @@ import (
 	"math/rand"
 )
 
-func InitializeAndGetEnv(key string) (string, error) {
-	viper.SetConfigFile("$HOME/hamed/Projects/Own/Authentication_Microservice/.env")
+func InitializeEnv(envFilePath string) error {
+	viper.SetConfigFile(envFilePath)
 	err := viper.ReadInConfig()
 	if err != nil {
-		return "", errors.Wrap(err, "viper can't read the config file")
+		return errors.Wrap(err, "Viper can't read the config file")
 	}
+	return nil
+}
+
+func GetEnv(key string) (string, error) {
 	value, ok := viper.Get(key).(string)
 	if !ok {
 		return "", fmt.Errorf("type assertion failed for the key: %s", key)

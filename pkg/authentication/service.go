@@ -28,9 +28,9 @@ func New(dbService *db.DatabaseInterface, logger *log.Logger) *authenticationSer
 }
 
 func (a *authenticationService) GenerateAccessToken(email string) (string, error) {
-	jwtExpirationStr, err := internal.InitializeAndGetEnv("JwtExpiration")
+	jwtExpirationStr, err := internal.GetEnv("JwtExpiration")
 	if err != nil {
-		a.logger.Println("Error reading jwt expiration key")
+		a.logger.Println("[Error] reading jwt expiration key")
 		return "", errors.Wrap(err, "Error reading jwt expiration")
 	}
 	jwtExpiration, _ := strconv.Atoi(jwtExpirationStr)
@@ -43,7 +43,7 @@ func (a *authenticationService) GenerateAccessToken(email string) (string, error
 			"tokenType": "access",
 		},
 	}
-	accessTokenPrivateKey, err := internal.InitializeAndGetEnv("AccessTokenPrivateKey")
+	accessTokenPrivateKey, err := internal.GetEnv("AccessTokenPrivateKey")
 	if err != nil {
 		a.logger.Println("Error reading access token private key")
 		return "", errors.Wrap(err, "Error reading access token private key")
@@ -68,7 +68,7 @@ func (a *authenticationService) GenerateRefreshToken(email, tokenHash string) (s
 			"tokenType": "refresh",
 		},
 	}
-	refreshTokenPrivateKey, err := internal.InitializeAndGetEnv("RefreshTokenPrivateKey")
+	refreshTokenPrivateKey, err := internal.GetEnv("RefreshTokenPrivateKey")
 	if err != nil {
 		a.logger.Println("Error reading refresh token private key")
 		return "", errors.Wrap(err, "Error reading refresh token private key")
@@ -92,7 +92,7 @@ func (a *authenticationService) SignUp(email, password string) error {
 	if user.Email != "" {
 		return fmt.Errorf("the user with %s email is already exist", email)
 	}
-	entropyBits, err := internal.InitializeAndGetEnv("MinEntropyBits")
+	entropyBits, err := internal.GetEnv("MinEntropyBits")
 	if err != nil {
 		return errors.Wrap(err, "Problem getting the min entropy bits from config file")
 	}
