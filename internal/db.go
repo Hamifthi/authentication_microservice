@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"github.com/Hamifthi/authentication_microservice/entity"
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -40,13 +41,8 @@ func InitializeDBCredentials(logger *log.Logger) (string, error) {
 		logger.Println("[Error] reading database ssl environment variable")
 		return "", errors.Wrap(err, "Error reading database ssl environment variable")
 	}
-	timezone, err := GetEnv("POSTGRES_TIMEZONE")
-	if err != nil {
-		logger.Println("[Error] reading database timezone environment variable")
-		return "", errors.Wrap(err, "Error reading database timezone environment variable")
-	}
-	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
-		host, user, password, db, port, ssl, timezone), nil
+	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
+		host, user, password, db, port, ssl), nil
 }
 
 func CreateDBConnection(DSN string, logger *log.Logger) (*gorm.DB, error) {
@@ -85,7 +81,31 @@ func GetDatabaseConnection(dbConn *gorm.DB, logger *log.Logger) (*gorm.DB, error
 	return dbConn, nil
 }
 
-func AutoMigrate(db *gorm.DB, model *interface{}) error {
+func AutoMigrate(db *gorm.DB, model interface{}) error {
 	err := db.AutoMigrate(model)
 	return err
+}
+
+func InitializeAndConnectDBAndMigrate(l *log.Logger) (*gorm.DB, error) {
+	DSN, err := InitializeDBCredentials(l)
+	if err != nil {
+		l.Println("[Error] initializing db credentials")
+		return nil, errors.Wrap(err, "Error initializing db credentials")
+	}
+	dbConn, err := CreateDBConnection(DSN, l)
+	if err != nil {
+		l.Println("[Error] creating database connections")
+		return nil, errors.Wrap(err, "Error creating database connections")
+	}
+	db, err := GetDatabaseConnection(dbConn, l)
+	if err != nil {
+		l.Println("[Error] cannot get the database connection")
+		return nil, errors.Wrap(err, "Error cannot get the database connection")
+	}
+	err = AutoMigrate(db, entity.User{})
+	if err != nil {
+		l.Println("[Error] cannot auto migrate the user to the database")
+		return nil, errors.Wrap(err, "Error cannot auto migrate the user to the database")
+	}
+	return db, nil
 }
