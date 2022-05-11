@@ -23,8 +23,8 @@ func InitializeDBCredentials(logger *log.Logger) (string, error) {
 	}
 	db, err := GetEnv("POSTGRES_DB")
 	if err != nil {
-		logger.Println("[Error] reading database db environment variable")
-		return "", errors.Wrap(err, "Error reading db environment variable")
+		logger.Println("[Error] reading database database environment variable")
+		return "", errors.Wrap(err, "Error reading database environment variable")
 	}
 	host, err := GetEnv("POSTGRES_HOST")
 	if err != nil {
@@ -89,8 +89,8 @@ func AutoMigrate(db *gorm.DB, model interface{}) error {
 func InitializeAndConnectDBAndMigrate(l *log.Logger) (*gorm.DB, error) {
 	DSN, err := InitializeDBCredentials(l)
 	if err != nil {
-		l.Println("[Error] initializing db credentials")
-		return nil, errors.Wrap(err, "Error initializing db credentials")
+		l.Println("[Error] initializing database credentials")
+		return nil, errors.Wrap(err, "Error initializing database credentials")
 	}
 	dbConn, err := CreateDBConnection(DSN, l)
 	if err != nil {

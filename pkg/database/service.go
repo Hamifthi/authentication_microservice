@@ -1,4 +1,4 @@
-package db
+package database
 
 import (
 	"errors"
@@ -8,16 +8,16 @@ import (
 	"log"
 )
 
-type databaseService struct {
+type DatabaseService struct {
 	db     *gorm.DB
 	logger *log.Logger
 }
 
-func New(db *gorm.DB, logger *log.Logger) *databaseService {
-	return &databaseService{db, logger}
+func New(db *gorm.DB, logger *log.Logger) *DatabaseService {
+	return &DatabaseService{db, logger}
 }
 
-func (d *databaseService) GetUser(email string) (entity.User, error) {
+func (d *DatabaseService) GetUser(email string) (entity.User, error) {
 	var user entity.User
 	result := d.db.First(&user, "email = ?", email)
 	if result.Error != nil {
@@ -31,7 +31,7 @@ func (d *databaseService) GetUser(email string) (entity.User, error) {
 	return user, nil
 }
 
-func (d *databaseService) CreateUser(email, hashPass, tokenHash string) error {
+func (d *DatabaseService) CreateUser(email, hashPass, tokenHash string) error {
 	user := entity.User{Email: email, HashedPassword: hashPass, TokenHash: tokenHash}
 	result := d.db.Create(&user)
 	if result.Error != nil && result.RowsAffected != 1 {

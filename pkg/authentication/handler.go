@@ -10,17 +10,17 @@ import (
 )
 
 type AuthenticationHandler struct {
-	l           *log.Logger
 	authService *authenticationService
+	l           *log.Logger
 }
 
-func NewAuthenticationHandler(l *log.Logger, authService *authenticationService) *AuthenticationHandler {
-	return &AuthenticationHandler{l, authService}
+func NewHandler(authService *authenticationService, l *log.Logger) *AuthenticationHandler {
+	return &AuthenticationHandler{authService, l}
 }
 
 type keyUser struct{}
 
-func (ah *AuthenticationHandler) MiddlewareValidateProduct(next http.Handler) http.Handler {
+func (ah *AuthenticationHandler) MiddlewareValidateUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		user := entity.User{}
 
