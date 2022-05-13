@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	passwordValidator "github.com/wagslane/go-password-validator"
 	"golang.org/x/crypto/bcrypt"
+	"io/ioutil"
 	"log"
 	"net/mail"
 	"strconv"
@@ -27,6 +28,20 @@ func New(dbService database.DatabaseInterface, logger *log.Logger) *authenticati
 	}
 }
 
+func (a *authenticationService) readPrivateKey() ([]byte, error) {
+	accessTokenPrivateKeyPath, err := internal.GetEnv("TokenPrivateKeyPath")
+	if err != nil {
+		a.logger.Println("[Error] reading access token private key path from environment")
+		return nil, errors.Wrap(err, "Error reading access token private key path")
+	}
+	signBytes, err := ioutil.ReadFile(accessTokenPrivateKeyPath)
+	if err != nil {
+		a.logger.Println("[Error] reading access token private key")
+		return nil, errors.Wrap(err, "Error reading access token private key")
+	}
+	return signBytes, nil
+}
+
 func (a *authenticationService) GenerateAccessToken(email string) (string, error) {
 	jwtExpirationStr, err := internal.GetEnv("JwtExpiration")
 	if err != nil {
@@ -43,14 +58,14 @@ func (a *authenticationService) GenerateAccessToken(email string) (string, error
 			"tokenType": "access",
 		},
 	}
-	accessTokenPrivateKey, err := internal.GetEnv("AccessTokenPrivateKey")
+	signBytes, err := a.readPrivateKey()
 	if err != nil {
-		a.logger.Println("Error reading access token private key")
+		a.logger.Println("[Error] reading access token private key")
 		return "", errors.Wrap(err, "Error reading access token private key")
 	}
-	signKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(accessTokenPrivateKey))
+	signKey, err := jwt.ParseRSAPrivateKeyFromPEM(signBytes)
 	if err != nil {
-		a.logger.Println("Unable to parse the access token private key")
+		a.logger.Println("[Error] Unable to parse the access token private key")
 		return "", errors.New("Unable to parse the access token private key")
 	}
 	// its better use environment variable here
@@ -68,12 +83,12 @@ func (a *authenticationService) GenerateRefreshToken(email, tokenHash string) (s
 			"tokenType": "refresh",
 		},
 	}
-	refreshTokenPrivateKey, err := internal.GetEnv("RefreshTokenPrivateKey")
+	signBytes, err := a.readPrivateKey()
 	if err != nil {
-		a.logger.Println("Error reading refresh token private key")
-		return "", errors.Wrap(err, "Error reading refresh token private key")
+		a.logger.Println("[Error] reading access token private key")
+		return "", errors.Wrap(err, "Error reading access token private key")
 	}
-	signKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(refreshTokenPrivateKey))
+	signKey, err := jwt.ParseRSAPrivateKeyFromPEM(signBytes)
 	if err != nil {
 		a.logger.Println("Unable to parse the refresh token private key")
 		return "", errors.New("Unable to parse the refresh token private key")
