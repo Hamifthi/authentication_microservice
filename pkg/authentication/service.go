@@ -42,7 +42,21 @@ func (a *authenticationService) readPrivateKey() ([]byte, error) {
 	return signBytes, nil
 }
 
-func (a *authenticationService) GenerateAccessToken(email string) (string, error) {
+func (a *authenticationService) readPublicKey() ([]byte, error) {
+	accessTokenPublicKeyPath, err := internal.GetEnv("TokenPublicKeyPath")
+	if err != nil {
+		a.logger.Println("[Error] reading access token public key path from environment")
+		return nil, errors.Wrap(err, "Error reading access token public key path")
+	}
+	verifyBytes, err := ioutil.ReadFile(accessTokenPublicKeyPath)
+	if err != nil {
+		a.logger.Println("[Error] reading access token public key")
+		return nil, errors.Wrap(err, "Error reading access token public key")
+	}
+	return verifyBytes, nil
+}
+
+func (a *authenticationService) generateAccessToken(email string) (string, error) {
 	jwtExpirationStr, err := internal.GetEnv("JwtExpiration")
 	if err != nil {
 		a.logger.Println("[Error] reading jwt expiration key")
@@ -73,14 +87,22 @@ func (a *authenticationService) GenerateAccessToken(email string) (string, error
 	return token.SignedString(signKey)
 }
 
-func (a *authenticationService) GenerateRefreshToken(email, tokenHash string) (string, error) {
+type RefreshTokenCustomClaims struct {
+	Foo string `json:"foo"`
+	jwt.MapClaims
+}
+
+func (a *authenticationService) generateRefreshToken(email, tokenHash string) (string, error) {
 	customKey := internal.GenerateCustomKey(email, tokenHash)
-	claims := jwt.MapClaims{
-		"iss": "authService",
-		"data": map[string]string{
-			"userEmail": email,
-			"customKey": customKey,
-			"tokenType": "refresh",
+	claims := RefreshTokenCustomClaims{
+		"authServiceCustomClaims",
+		jwt.MapClaims{
+			"iss": "authService",
+			"data": map[string]string{
+				"userEmail": email,
+				"customKey": customKey,
+				"tokenType": "refresh",
+			},
 		},
 	}
 	signBytes, err := a.readPrivateKey()
@@ -146,15 +168,58 @@ func (a *authenticationService) SignIn(email, password string) (entity.Tokens, e
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 		return emptyTokens, errors.Wrap(err, "The invalid credentials, please try again.")
 	}
-	accessToken, err := a.GenerateAccessToken(email)
+	accessToken, err := a.generateAccessToken(email)
 	if err != nil {
 		a.logger.Println("Unable to get access token")
 		return emptyTokens, errors.New("Unable to get access token")
 	}
-	refreshToken, err := a.GenerateRefreshToken(email, user.TokenHash)
+	refreshToken, err := a.generateRefreshToken(email, user.TokenHash)
 	if err != nil {
 		a.logger.Println("Unable to get refresh token")
 		return emptyTokens, errors.New("Unable to get refresh token")
 	}
 	return entity.Tokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+}
+
+func (a *authenticationService) ValidateRefreshToken(refreshToken string) (entity.User, error) {
+	token, err := jwt.ParseWithClaims(refreshToken, &RefreshTokenCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			a.logger.Println("[Error] unexpected signing method in auth token")
+			return nil, errors.New("Unexpected signing method in auth token")
+		}
+		verifyBytes, err := a.readPublicKey()
+		if err != nil {
+			a.logger.Println("[Error] reading access token public key")
+			return "", errors.Wrap(err, "Error reading access token private key")
+		}
+		verifyKey, err := jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
+		if err != nil {
+			a.logger.Println("[Error] unable to parse public key", "error", err)
+			return nil, err
+		}
+
+		return verifyKey, nil
+	})
+	user := entity.User{}
+	if err != nil {
+		a.logger.Println("[Error] parsing the claims from refresh token")
+		return user, errors.Wrap(err, "Error parsing the claims from refresh token")
+	}
+	claims, ok := token.Claims.(*RefreshTokenCustomClaims)
+	data, ok := claims.MapClaims["data"].(map[string]string)
+	if !ok || !token.Valid || data["userEmail"] == "" || data["tokenType"] != "refresh" {
+		a.logger.Println("[Error] getting claims from token")
+		return user, errors.New("Error getting claims from token")
+	}
+	user, err = a.dbService.GetUser(data["userEmail"])
+	if err != nil {
+		a.logger.Println("[Error] can't retrieve user from database")
+		return user, errors.Wrap(err, "Error can't retrieve user from database")
+	}
+	generatedCustomKey := internal.GenerateCustomKey(user.Email, user.TokenHash)
+	if data["customKey"] != generatedCustomKey {
+		a.logger.Println("[Error] refresh token is malformed")
+		return user, errors.New("Refresh token is malformed")
+	}
+	return user, nil
 }

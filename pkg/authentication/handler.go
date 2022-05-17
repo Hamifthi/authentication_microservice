@@ -7,6 +7,7 @@ import (
 	"github.com/Hamifthi/authentication_microservice/entity"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type AuthenticationHandler struct {
@@ -45,6 +46,36 @@ func (ah *AuthenticationHandler) MiddlewareValidateUser(next http.Handler) http.
 		ctx := context.WithValue(r.Context(), keyUser{}, user)
 		r = r.WithContext(ctx)
 
+		next.ServeHTTP(rw, r)
+	})
+}
+
+func (ah *AuthenticationHandler) MiddlewareValidateRefreshToken(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		authContent := strings.Split(authHeader, " ")
+		token := authContent[1]
+		if len(authContent) != 2 {
+			ah.l.Println("[ERROR] Authorization token not provided or malformed")
+			http.Error(
+				rw,
+				fmt.Sprint("Error authorization token not provided or malformed"),
+				http.StatusUnauthorized,
+			)
+			return
+		}
+		user, err := ah.authService.ValidateRefreshToken(token)
+		if user == (entity.User{}) || err != nil {
+			ah.l.Println("[ERROR] Refresh token isn't valid")
+			http.Error(
+				rw,
+				fmt.Sprintf("Error refresh token isn't valid due to %s", err),
+				http.StatusUnauthorized,
+			)
+			return
+		}
+		ctx := context.WithValue(r.Context(), keyUser{}, user)
+		r = r.WithContext(ctx)
 		next.ServeHTTP(rw, r)
 	})
 }
