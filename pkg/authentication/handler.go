@@ -98,7 +98,7 @@ func (ah *AuthenticationHandler) UserLogin(rw http.ResponseWriter, r *http.Reque
 	user := r.Context().Value(keyUser{}).(entity.User)
 	tokens, err := ah.authService.SignIn(user.Email, user.Password)
 	if err != nil {
-		ah.l.Printf("[ERROR] signing up user has %s error", err)
+		ah.l.Printf("[ERROR] login user has %s error", err)
 		http.Error(rw, "Unable to signing in the user", http.StatusBadRequest)
 		return
 	}

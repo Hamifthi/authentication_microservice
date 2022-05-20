@@ -75,10 +75,12 @@ fabric.properties
 
 *.env
 
-# data folder that store the data of database
-/data/*
+# _data folder that store the _data of database
+/_data/*
 
 scripts.sh
 
 auth-private.pem
 auth-public.pem
+
+/graphql_requests

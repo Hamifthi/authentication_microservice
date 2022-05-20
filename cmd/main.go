@@ -1,15 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/Hamifthi/authentication_microservice/internal"
 	"github.com/Hamifthi/authentication_microservice/pkg/authentication"
-	protos "github.com/Hamifthi/authentication_microservice/pkg/authentication/pb"
+	"github.com/Hamifthi/authentication_microservice/pkg/authentication/graph/generated"
 	"github.com/Hamifthi/authentication_microservice/pkg/database"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"log"
-	"net"
+	"net/http"
 	"os"
 )
 
@@ -82,26 +81,42 @@ func main() {
 	//ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	//server.Shutdown(ctx)
 
-	// create a new gRPC server, use WithInsecure to allow http connections
-	gs := grpc.NewServer()
-
-	// create an instance of the Currency server
-	grpcAS := authentication.NewAuthServer(authService, l)
-
-	// register the currency server
-	protos.RegisterAuthServiceServer(gs, grpcAS)
-
-	// register the reflection service which allows clients to determine the methods
-	// for this gRPC service
-	reflection.Register(gs)
-
-	// create a TCP socket for inbound server connections
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", 8000))
-	if err != nil {
-		l.Printf("[Error] Unable to create listener due to %s error", err)
-		os.Exit(1)
+	// TODO enable this if you want to run the grpc part of the file
+	//// create a new gRPC server, use WithInsecure to allow http connections
+	//gs := grpc.NewServer()
+	//
+	//// create an instance of the Currency server
+	//grpcAS := authentication.NewAuthServer(authService, l)
+	//
+	//// register the currency server
+	//protos.RegisterAuthServiceServer(gs, grpcAS)
+	//
+	//// register the reflection service which allows clients to determine the methods
+	//// for this gRPC service
+	//reflection.Register(gs)
+	//
+	//// create a TCP socket for inbound server connections
+	//listener, err := net.Listen("tcp", fmt.Sprintf(":%d", 8000))
+	//if err != nil {
+	//	l.Printf("[Error] Unable to create listener due to %s error", err)
+	//	os.Exit(1)
+	//}
+	//
+	//// listen for requests
+	//gs.Serve(listener)
+	port, _ := internal.GetEnv("PORT")
+	if port == "" {
+		port = "8000"
+	}
+	resolver := &authentication.Resolver{
+		authService, l,
 	}
 
-	// listen for requests
-	gs.Serve(listener)
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
+
+	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/query", srv)
+
+	l.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	l.Fatal(http.ListenAndServe(":"+port, nil))
 }

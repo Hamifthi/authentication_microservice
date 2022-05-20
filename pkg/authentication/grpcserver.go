@@ -58,7 +58,7 @@ func (ass *AuthServiceServer) Login(ctx context.Context, req *protos.LoginReques
 	if err != nil {
 		grpcErr := status.Newf(
 			codes.Internal,
-			"Error get %s error when trying to sign in the user",
+			"Error get %s error when trying to login the user",
 			err,
 		)
 		return nil, grpcErr.Err()
