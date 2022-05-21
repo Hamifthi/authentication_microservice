@@ -223,3 +223,12 @@ func (a *authenticationService) ValidateRefreshToken(refreshToken string) (entit
 	}
 	return user, nil
 }
+
+func (a *authenticationService) RefreshAccessToken(user entity.User) (string, error) {
+	accessToken, err := a.generateAccessToken(user.Email)
+	if err != nil {
+		a.logger.Println("Unable to refresh access token")
+		return "", errors.Wrap(err, "Unable to refresh access token")
+	}
+	return accessToken, nil
+}
