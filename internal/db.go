@@ -1,9 +1,12 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"github.com/Hamifthi/authentication_microservice/entity"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
@@ -108,4 +111,27 @@ func InitializeAndConnectDBAndMigrate(l *log.Logger) (*gorm.DB, error) {
 		return nil, errors.Wrap(err, "Error cannot auto migrate the user to the database")
 	}
 	return db, nil
+}
+
+func ConnectMongoDB(ctx context.Context, l *log.Logger) (*mongo.Client, error) {
+	URI, err := GetEnv("MONGO_URI")
+	if err != nil {
+		l.Println("[Error] reading mongodb uri")
+		return nil, errors.Wrap(err, "Error reading mongodb uri")
+	}
+	var cred options.Credential
+	cred.Username, _ = GetEnv("MONGO_INITDB_ROOT_USERNAME")
+	cred.Password, _ = GetEnv("MONGO_INITDB_ROOT_PASSWORD")
+	clientOptions := options.Client().ApplyURI(URI).SetAuth(cred)
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		l.Println("[Error] connecting to mongodb database")
+		return nil, errors.Wrap(err, "Error connecting to mongodb database")
+	}
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		l.Println("[Error] ping mongodb database")
+		return nil, errors.Wrap(err, "Error ping mongodb database")
+	}
+	return client, nil
 }

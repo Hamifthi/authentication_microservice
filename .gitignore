@@ -77,6 +77,7 @@ fabric.properties
 
 # _data folder that store the _data of database
 /_data/*
+/mongo_data/*
 
 scripts.sh
 
