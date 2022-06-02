@@ -1,21 +1,22 @@
-package authentication
+package adapters
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/Hamifthi/authentication_microservice/entity"
+	"github.com/Hamifthi/authentication_microservice/pkg/authentication"
 	"log"
 	"net/http"
 	"strings"
 )
 
 type AuthenticationHandler struct {
-	authService *authenticationService
+	authService *authentication.AuthenticationService
 	l           *log.Logger
 }
 
-func NewHandler(authService *authenticationService, l *log.Logger) *AuthenticationHandler {
+func NewHandler(authService *authentication.AuthenticationService, l *log.Logger) *AuthenticationHandler {
 	return &AuthenticationHandler{authService, l}
 }
 

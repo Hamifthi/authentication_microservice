@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Hamifthi/authentication_microservice/internal"
 	"github.com/Hamifthi/authentication_microservice/pkg/authentication"
+	"github.com/Hamifthi/authentication_microservice/pkg/authentication/adapters"
 	"github.com/Hamifthi/authentication_microservice/pkg/database"
 	"github.com/gorilla/mux"
 	"log"
@@ -46,7 +47,7 @@ func main() {
 
 	// TODO this is the rest part of the code
 	// create auth handler to use its functions in the router
-	authHandler := authentication.NewHandler(authService, l)
+	authHandler := adapters.NewHandler(authService, l)
 	// create the router
 	sm := mux.NewRouter()
 	SignUpRouter := sm.Methods(http.MethodPost).Subrouter()

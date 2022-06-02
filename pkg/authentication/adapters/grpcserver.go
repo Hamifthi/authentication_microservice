@@ -1,21 +1,22 @@
-package authentication
+package adapters
 
 import (
 	"context"
 	"github.com/Hamifthi/authentication_microservice/entity"
-	protos "github.com/Hamifthi/authentication_microservice/pkg/authentication/pb"
+	"github.com/Hamifthi/authentication_microservice/pkg/authentication"
+	protos "github.com/Hamifthi/authentication_microservice/pkg/authentication/adapters/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"log"
 )
 
 type AuthServiceServer struct {
-	authService *authenticationService
+	authService *authentication.AuthenticationService
 	l           *log.Logger
 	protos.UnimplementedAuthServiceServer
 }
 
-func NewAuthServer(authService *authenticationService, l *log.Logger) *AuthServiceServer {
+func NewAuthServer(authService *authentication.AuthenticationService, l *log.Logger) *AuthServiceServer {
 	return &AuthServiceServer{authService, l, protos.UnimplementedAuthServiceServer{}}
 }
 

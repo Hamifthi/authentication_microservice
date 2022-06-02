@@ -1,4 +1,4 @@
-package authentication
+package adapters
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
 // will be copied through when generating and any unknown code will be moved to the end.
@@ -6,8 +6,8 @@ package authentication
 import (
 	"context"
 	"github.com/Hamifthi/authentication_microservice/entity"
-	"github.com/Hamifthi/authentication_microservice/pkg/authentication/graph/generated"
-	"github.com/Hamifthi/authentication_microservice/pkg/authentication/graph/model"
+	"github.com/Hamifthi/authentication_microservice/pkg/authentication/adapters/graph/generated"
+	"github.com/Hamifthi/authentication_microservice/pkg/authentication/adapters/graph/model"
 )
 
 func (r *mutationResolver) SignUp(ctx context.Context, input model.UserInput) (string, error) {

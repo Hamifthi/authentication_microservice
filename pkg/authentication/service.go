@@ -16,19 +16,19 @@ import (
 	"time"
 )
 
-type authenticationService struct {
+type AuthenticationService struct {
 	dbService database.DatabaseInterface
 	logger    *log.Logger
 }
 
-func New(dbService database.DatabaseInterface, logger *log.Logger) *authenticationService {
-	return &authenticationService{
+func New(dbService database.DatabaseInterface, logger *log.Logger) *AuthenticationService {
+	return &AuthenticationService{
 		dbService: dbService,
 		logger:    logger,
 	}
 }
 
-func (a *authenticationService) readPrivateKey() ([]byte, error) {
+func (a *AuthenticationService) readPrivateKey() ([]byte, error) {
 	accessTokenPrivateKeyPath, err := internal.GetEnv("TokenPrivateKeyPath")
 	if err != nil {
 		a.logger.Println("[Error] reading access token private key path from environment")
@@ -42,7 +42,7 @@ func (a *authenticationService) readPrivateKey() ([]byte, error) {
 	return signBytes, nil
 }
 
-func (a *authenticationService) readPublicKey() ([]byte, error) {
+func (a *AuthenticationService) readPublicKey() ([]byte, error) {
 	accessTokenPublicKeyPath, err := internal.GetEnv("TokenPublicKeyPath")
 	if err != nil {
 		a.logger.Println("[Error] reading access token public key path from environment")
@@ -56,7 +56,7 @@ func (a *authenticationService) readPublicKey() ([]byte, error) {
 	return verifyBytes, nil
 }
 
-func (a *authenticationService) generateAccessToken(email string) (string, error) {
+func (a *AuthenticationService) generateAccessToken(email string) (string, error) {
 	jwtExpirationStr, err := internal.GetEnv("JwtExpiration")
 	if err != nil {
 		a.logger.Println("[Error] reading jwt expiration key")
@@ -92,7 +92,7 @@ type RefreshTokenCustomClaims struct {
 	jwt.MapClaims
 }
 
-func (a *authenticationService) generateRefreshToken(email, tokenHash string) (string, error) {
+func (a *AuthenticationService) generateRefreshToken(email, tokenHash string) (string, error) {
 	customKey := internal.GenerateCustomKey(email, tokenHash)
 	claims := RefreshTokenCustomClaims{
 		"authServiceCustomClaims",
@@ -120,7 +120,7 @@ func (a *authenticationService) generateRefreshToken(email, tokenHash string) (s
 	return token.SignedString(signKey)
 }
 
-func (a *authenticationService) SignUp(email, password string) error {
+func (a *AuthenticationService) SignUp(email, password string) error {
 	_, err := mail.ParseAddress(email)
 	if err != nil {
 		return errors.Wrap(err, "The email address is invalid")
@@ -154,7 +154,7 @@ func (a *authenticationService) SignUp(email, password string) error {
 	return nil
 }
 
-func (a *authenticationService) SignIn(email, password string) (entity.Tokens, error) {
+func (a *AuthenticationService) SignIn(email, password string) (entity.Tokens, error) {
 	emptyTokens := entity.Tokens{AccessToken: "", RefreshToken: ""}
 	_, err := mail.ParseAddress(email)
 	if err != nil {
@@ -181,7 +181,7 @@ func (a *authenticationService) SignIn(email, password string) (entity.Tokens, e
 	return entity.Tokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func (a *authenticationService) ValidateRefreshToken(refreshToken string) (entity.User, error) {
+func (a *AuthenticationService) ValidateRefreshToken(refreshToken string) (entity.User, error) {
 	token, err := jwt.ParseWithClaims(refreshToken, &RefreshTokenCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			a.logger.Println("[Error] unexpected signing method in auth token")
@@ -224,7 +224,7 @@ func (a *authenticationService) ValidateRefreshToken(refreshToken string) (entit
 	return user, nil
 }
 
-func (a *authenticationService) RefreshAccessToken(user entity.User) (string, error) {
+func (a *AuthenticationService) RefreshAccessToken(user entity.User) (string, error) {
 	accessToken, err := a.generateAccessToken(user.Email)
 	if err != nil {
 		a.logger.Println("Unable to refresh access token")
