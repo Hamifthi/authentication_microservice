@@ -1,7 +1,6 @@
 package authentication
 
 import (
-	"fmt"
 	"github.com/Hamifthi/authentication_microservice/entity"
 	"github.com/Hamifthi/authentication_microservice/internal"
 	"github.com/Hamifthi/authentication_microservice/pkg/database"
@@ -127,7 +126,7 @@ func (a *AuthenticationService) SignUp(email, password string) error {
 	}
 	user, err := a.dbService.GetUser(email)
 	if user.Email != "" {
-		return fmt.Errorf("the user with %s email is already exist", email)
+		return errors.Errorf("the user with %s email is already exist", email)
 	}
 	entropyBits, err := internal.GetEnv("MinEntropyBits")
 	if err != nil {
@@ -162,7 +161,7 @@ func (a *AuthenticationService) SignIn(email, password string) (entity.Tokens, e
 	}
 	user, err := a.dbService.GetUser(email)
 	if user.Email == "" {
-		return emptyTokens, fmt.Errorf("the user with %s email doesn't exist", email)
+		return emptyTokens, errors.Wrapf(err, "the user with %s email doesn't exist", email)
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {

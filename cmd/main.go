@@ -19,7 +19,7 @@ func main() {
 	// initialize environment variable
 	err := internal.InitializeEnv(".env")
 	if err != nil {
-		l.Println("[Error] reading database user environment variable")
+		l.Println("[Error] reading environment variable")
 		os.Exit(1)
 	}
 	// TODO postgres db initialization and implementation
